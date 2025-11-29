@@ -26,11 +26,6 @@ local function runEffect()
     local originalAmbient = Lighting.Ambient
     local originalOutdoorAmbient = Lighting.OutdoorAmbient
 
-	root.Anchored = true
-	task.delay(0.5, function()
-    	root.Anchored = false
-	end)
-
     local anim = Instance.new("Animation")
     anim.AnimationId = "rbxassetid://113701720864867"
     local track = humanoid:LoadAnimation(anim)
