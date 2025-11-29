@@ -1,0 +1,156 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local root = character:WaitForChild("HumanoidRootPart")
+local camera = workspace.CurrentCamera
+
+if not Lighting:FindFirstChildOfClass("Sky") then
+    local sky = Instance.new("Sky")
+    sky.SkyboxBk = "rbxassetid://600830446"
+    sky.SkyboxDn = "rbxassetid://600831635"
+    sky.SkyboxFt = "rbxassetid://600832720"
+    sky.SkyboxLf = "rbxassetid://600832082"
+    sky.SkyboxRt = "rbxassetid://600833387"
+    sky.SkyboxUp = "rbxassetid://600835177"
+    sky.Parent = Lighting
+end
+
+local function runEffect()
+    local originalClock = Lighting.ClockTime
+    local originalBrightness = Lighting.Brightness
+    local originalAmbient = Lighting.Ambient
+    local originalOutdoorAmbient = Lighting.OutdoorAmbient
+
+	root.Anchored = true
+	task.delay(0.5, function()
+    	root.Anchored = false
+	end)
+
+    local anim = Instance.new("Animation")
+    anim.AnimationId = "rbxassetid://113701720864867"
+    local track = humanoid:LoadAnimation(anim)
+    track:Play()
+
+    local sound = Instance.new("Sound")
+    sound.SoundId = "rbxassetid://5536159516"
+    sound.PlaybackSpeed = 0.675
+    sound.Volume = 0.6
+    sound.Parent = character:FindFirstChild("Head") or character
+    sound:Play()
+
+    local sourceAttachment = ReplicatedStorage.Resources.aizen.Hado90Arm.Activate
+    local clonedAttachment = sourceAttachment:Clone()
+    for _, emitter in ipairs(clonedAttachment:GetChildren()) do
+        if emitter:IsA("ParticleEmitter") then
+            emitter.Enabled = true
+        end
+    end
+    local rightArm = character:FindFirstChild("Right Arm") or character:FindFirstChild("RightHand")
+    clonedAttachment.Parent = rightArm
+
+    local killuaEmitter = ReplicatedStorage.Resources.Killua.TSpecial.Effect.VFX.ParticleEmitter
+    local limbs = {
+        character:FindFirstChild("Right Arm") or character:FindFirstChild("RightHand"),
+        character:FindFirstChild("Left Arm") or character:FindFirstChild("LeftHand"),
+        character:FindFirstChild("Right Leg") or character:FindFirstChild("RightFoot"),
+        character:FindFirstChild("Left Leg") or character:FindFirstChild("LeftFoot"),
+        character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso"),
+        character:FindFirstChild("Head")
+    }
+
+    local auraClones = {}
+    for _, limb in ipairs(limbs) do
+        if limb then
+            local emitterClone = killuaEmitter:Clone()
+            emitterClone.Enabled = true
+            emitterClone.Rate = 3
+            emitterClone.Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.new(0.2, 0, 0)),
+                ColorSequenceKeypoint.new(1, Color3.new(0.1, 0, 0))
+            })
+            emitterClone.Parent = limb
+            table.insert(auraClones, emitterClone)
+        end
+    end
+
+    task.spawn(function()
+        local startTime = tick()
+        local originalType = camera.CameraType
+        local originalCFrame = camera.CFrame
+        camera.CameraType = Enum.CameraType.Scriptable
+        while tick() - startTime < 0.5 do
+            local offset = Vector3.new((math.random() - 0.5) * 0.5,(math.random() - 0.5) * 0.5,0)
+            camera.CFrame = originalCFrame * CFrame.new(offset)
+            task.wait(0.05)
+        end
+        camera.CameraType = originalType
+    end)
+
+    task.spawn(function()
+        local duration = 3
+        local startTime = tick()
+        while tick() - startTime < duration do
+            local progress = (tick() - startTime) / duration
+            local hour = (originalClock + progress * 24) % 24
+            Lighting.ClockTime = hour
+            local brightness = math.clamp(math.cos((hour/24) * math.pi * 2) * 1 + 1, 0, 2)
+            Lighting.Brightness = brightness * 0.5
+            local ambientLevel = math.clamp(brightness/4, 0, 1)
+            local ambientColor = Color3.new(ambientLevel, ambientLevel, ambientLevel)
+            Lighting.Ambient = ambientColor
+            Lighting.OutdoorAmbient = ambientColor
+            RunService.Heartbeat:Wait()
+        end
+        local restoreDuration = 3
+        local restoreStart = tick()
+        local startClock = Lighting.ClockTime
+        local startBrightness = Lighting.Brightness
+        local startAmbient = Lighting.Ambient
+        local startOutdoor = Lighting.OutdoorAmbient
+        while tick() - restoreStart < restoreDuration do
+            local progress = (tick() - restoreStart) / restoreDuration
+            Lighting.ClockTime = startClock + (originalClock - startClock) * progress
+            Lighting.Brightness = startBrightness + (originalBrightness - startBrightness) * progress
+            Lighting.Ambient = startAmbient:lerp(originalAmbient, progress)
+            Lighting.OutdoorAmbient = startOutdoor:lerp(originalOutdoorAmbient, progress)
+            RunService.Heartbeat:Wait()
+        end
+        Lighting.ClockTime = originalClock
+        Lighting.Brightness = originalBrightness
+        Lighting.Ambient = originalAmbient
+        Lighting.OutdoorAmbient = originalOutdoorAmbient
+    end)
+
+    task.delay(0.1, function()
+        for _, emitter in ipairs(clonedAttachment:GetChildren()) do
+            if emitter:IsA("ParticleEmitter") then
+                for i = 0, 0.075, 0.1 do
+                    emitter.Transparency = NumberSequence.new(i)
+                    task.wait(0.05)
+                end
+                emitter.Enabled = false
+            end
+        end
+        clonedAttachment:Destroy()
+        track:Stop()
+        task.delay(0.1, function()
+            for _, aura in ipairs(auraClones) do
+                if aura.Parent then
+                    for i = 0, 1, 0.5 do
+                        aura.Transparency = NumberSequence.new(i)
+                        task.wait(0.05)
+                    end
+                    aura.Enabled = false
+                    aura:Destroy()
+                end
+            end
+        end)
+    end)
+end
+
+runEffect()
