@@ -39,17 +39,32 @@ local function runEffect()
     sound.Parent = character:FindFirstChild("Head") or character
     sound:Play()
 
-    local sourceAttachment = ReplicatedStorage.Resources.aizen.Hado90Arm.Activate
-    local clonedAttachment = sourceAttachment:Clone()
-    for _, emitter in ipairs(clonedAttachment:GetChildren()) do
-        if emitter:IsA("ParticleEmitter") then
-            emitter.Enabled = true
+    local sourceAttachment = ReplicatedStorage:FindFirstChild("Resources")
+        and ReplicatedStorage.Resources:FindFirstChild("aizen")
+        and ReplicatedStorage.Resources.aizen:FindFirstChild("Hado90Arm")
+        and ReplicatedStorage.Resources.aizen.Hado90Arm:FindFirstChild("Activate")
+
+    local clonedAttachment
+    if sourceAttachment then
+        clonedAttachment = sourceAttachment:Clone()
+        for _, emitter in ipairs(clonedAttachment:GetChildren()) do
+            if emitter:IsA("ParticleEmitter") then
+                emitter.Enabled = true
+            end
+        end
+        local rightArm = character:FindFirstChild("Right Arm") or character:FindFirstChild("RightHand")
+        if rightArm then
+            clonedAttachment.Parent = rightArm
         end
     end
-    local rightArm = character:FindFirstChild("Right Arm") or character:FindFirstChild("RightHand")
-    clonedAttachment.Parent = rightArm
 
-    local killuaEmitter = ReplicatedStorage.Resources.Killua.TSpecial.Effect.VFX.ParticleEmitter
+    local killuaEmitter = ReplicatedStorage:FindFirstChild("Resources")
+        and ReplicatedStorage.Resources:FindFirstChild("Killua")
+        and ReplicatedStorage.Resources.Killua:FindFirstChild("TSpecial")
+        and ReplicatedStorage.Resources.Killua.TSpecial:FindFirstChild("Effect")
+        and ReplicatedStorage.Resources.Killua.TSpecial.Effect:FindFirstChild("VFX")
+        and ReplicatedStorage.Resources.Killua.TSpecial.Effect.VFX:FindFirstChild("ParticleEmitter")
+
     local limbs = {
         character:FindFirstChild("Right Arm") or character:FindFirstChild("RightHand"),
         character:FindFirstChild("Left Arm") or character:FindFirstChild("LeftHand"),
@@ -60,17 +75,19 @@ local function runEffect()
     }
 
     local auraClones = {}
-    for _, limb in ipairs(limbs) do
-        if limb then
-            local emitterClone = killuaEmitter:Clone()
-            emitterClone.Enabled = true
-            emitterClone.Rate = 3
-            emitterClone.Color = ColorSequence.new({
-                ColorSequenceKeypoint.new(0, Color3.new(0.2, 0, 0)),
-                ColorSequenceKeypoint.new(1, Color3.new(0.1, 0, 0))
-            })
-            emitterClone.Parent = limb
-            table.insert(auraClones, emitterClone)
+    if killuaEmitter then
+        for _, limb in ipairs(limbs) do
+            if limb then
+                local emitterClone = killuaEmitter:Clone()
+                emitterClone.Enabled = true
+                emitterClone.Rate = 3
+                emitterClone.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.new(0.2, 0, 0)),
+                    ColorSequenceKeypoint.new(1, Color3.new(0.1, 0, 0))
+                })
+                emitterClone.Parent = limb
+                table.insert(auraClones, emitterClone)
+            end
         end
     end
 
@@ -109,30 +126,19 @@ local function runEffect()
         Lighting.OutdoorAmbient = originalOutdoorAmbient
     end)
 
-    task.delay(0.1, function()
-        for _, emitter in ipairs(clonedAttachment:GetChildren()) do
-            if emitter:IsA("ParticleEmitter") then
-                for i = 0, 0.075, 0.1 do
-                    emitter.Transparency = NumberSequence.new(i)
-                    task.wait(0.05)
-                end
-                emitter.Enabled = false
+    task.delay(0.5, function()
+        if clonedAttachment then
+            clonedAttachment:Destroy()
+        end
+        if track and track.IsPlaying then
+            track:Stop()
+        end
+        for _, aura in ipairs(auraClones) do
+            if aura and aura.Parent then
+                aura.Enabled = false
+                aura:Destroy()
             end
         end
-        clonedAttachment:Destroy()
-        track:Stop()
-        task.delay(0.1, function()
-            for _, aura in ipairs(auraClones) do
-                if aura.Parent then
-                    for i = 0, 1, 0.5 do
-                        aura.Transparency = NumberSequence.new(i)
-                        task.wait(0.05)
-                    end
-                    aura.Enabled = false
-                    aura:Destroy()
-                end
-            end
-        end)
     end)
 end
 
