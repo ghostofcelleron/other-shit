@@ -7,7 +7,6 @@ local player = Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local humanoid = character:WaitForChild("Humanoid")
 local root = character:WaitForChild("HumanoidRootPart")
-local camera = workspace.CurrentCamera
 
 if not Lighting:FindFirstChildOfClass("Sky") then
     local sky = Instance.new("Sky")
@@ -29,12 +28,13 @@ local function runEffect()
     local anim = Instance.new("Animation")
     anim.AnimationId = "rbxassetid://113701720864867"
     local track = humanoid:LoadAnimation(anim)
+    track.Priority = Enum.AnimationPriority.Action4
     track:Play()
 
     local sound = Instance.new("Sound")
-    sound.SoundId = "rbxassetid://5536159516"
-    sound.TimePosition = 1.5
-    sound.PlaybackSpeed = 1.15
+    sound.SoundId = "rbxassetid://107209649466735"
+    sound.TimePosition = 0.25
+    sound.PlaybackSpeed = 1
     sound.Volume = 0.6
     sound.Parent = character:FindFirstChild("Head") or character
     sound:Play()
@@ -75,20 +75,7 @@ local function runEffect()
     end
 
     task.spawn(function()
-        local startTime = tick()
-        local originalType = camera.CameraType
-        local originalCFrame = camera.CFrame
-        camera.CameraType = Enum.CameraType.Scriptable
-        while tick() - startTime < 0.5 do
-            local offset = Vector3.new((math.random() - 0.5) * 0.5,(math.random() - 0.5) * 0.5,0)
-            camera.CFrame = originalCFrame * CFrame.new(offset)
-            task.wait(0.05)
-        end
-        camera.CameraType = originalType
-    end)
-
-    task.spawn(function()
-        local duration = 3
+        local duration = 2
         local startTime = tick()
         while tick() - startTime < duration do
             local progress = (tick() - startTime) / duration
@@ -102,7 +89,7 @@ local function runEffect()
             Lighting.OutdoorAmbient = ambientColor
             RunService.Heartbeat:Wait()
         end
-        local restoreDuration = 3
+        local restoreDuration = 2
         local restoreStart = tick()
         local startClock = Lighting.ClockTime
         local startBrightness = Lighting.Brightness
